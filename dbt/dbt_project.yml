@@ -1,0 +1,13 @@
+name: investing_dashboard
+version: "1.0.0"
+profile: investing_dashboard
+
+model-paths: ["models"]
+
+models:
+  investing_dashboard:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+      

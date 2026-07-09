@@ -1,0 +1,18 @@
+version: 2
+models:
+  - name: stg_fred__yields
+    description: "Cleaned FRED Treasury yields; one row per maturity per date."
+    columns:
+      - name: yield_date
+        description: "Observation date."
+        tests: [not_null]
+      - name: maturity_label
+        description: "Maturity bucket."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["10Y", "2Y"]
+      - name: yield_pct
+        description: "Yield as a percent (e.g. 4.35)."
+        tests: [not_null]
+        

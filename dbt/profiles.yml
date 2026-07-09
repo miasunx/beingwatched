@@ -1,0 +1,9 @@
+beingwatched:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../warehouse.duckdb
+      schema: main
+      
+      
