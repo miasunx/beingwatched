@@ -1,13 +1,14 @@
-name: investing_dashboard
+name: beingwatched
 version: "1.0.0"
-profile: investing_dashboard
+profile: beingwatched
 
 model-paths: ["models"]
 
 models:
-  investing_dashboard:
+  beingwatched:
     staging:
       +materialized: view
     marts:
       +materialized: table
+      
       

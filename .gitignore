@@ -1,6 +1,10 @@
 .venv/
 *.duckdb
 .env
+.env.*
 target/
 dbt_packages/
 logs/
+.DS_Store
+.vscode/
+dbt/.user.yml

@@ -4,7 +4,7 @@ import duckdb
 from datetime import datetime, timezone
 
 FRED_KEY = os.environ["FRED_API_KEY"]
-SERIES = {"DGS10": "10Y", "DGS2": "2Y"}   # FRED series IDs -> friendly label
+SERIES = {"DGS10": "10Y", "DGS2": "2Y"}
 DB_PATH = "warehouse.duckdb"
 
 def fetch_series(series_id: str) -> list[dict]:
@@ -15,7 +15,7 @@ def fetch_series(series_id: str) -> list[dict]:
         "api_key": FRED_KEY,
         "file_type": "json",
         "sort_order": "desc",
-        "limit": 400,           # ~1 trading year; enough to prove the slice
+        "limit": 400,
     }
     resp = requests.get(url, params=params, timeout=30)
     resp.raise_for_status()
@@ -30,9 +30,9 @@ def main():
                 "series_id": series_id,
                 "maturity_label": label,
                 "obs_date": obs["date"],
-                "value": obs["value"],     # keep as-is (FRED uses "." for missing)
-                "_loaded_at": loaded_at,    # metadata: when we pulled it
-                "_source": "fred",          # metadata: which API
+                "value": obs["value"],
+                "_loaded_at": loaded_at,
+                "_source": "fred",
             })
 
     con = duckdb.connect(DB_PATH)
