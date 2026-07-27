@@ -8,7 +8,37 @@ sources:
         freshness:
           warn_after: {count: 36, period: hour}
           error_after: {count: 72, period: hour}
-      - name: raw_fred__series_meta
+      - name: raw_fred__yields_series_meta
+        loaded_at_field: fetched_at_utc::timestamp
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
+      - name: raw_fred__cpi
+        loaded_at_field: fetched_at_utc::timestamp
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
+      - name: raw_fred__cpi_series_meta
+        loaded_at_field: fetched_at_utc::timestamp
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
+      - name: raw_fred__pce
+        loaded_at_field: fetched_at_utc::timestamp
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
+      - name: raw_fred__pce_series_meta
+        loaded_at_field: fetched_at_utc::timestamp
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
+      - name: raw_fred__nfp
+        loaded_at_field: fetched_at_utc::timestamp
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
+      - name: raw_fred__nfp_series_meta
         loaded_at_field: fetched_at_utc::timestamp
         freshness:
           warn_after: {count: 36, period: hour}

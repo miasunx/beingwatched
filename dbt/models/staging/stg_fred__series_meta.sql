@@ -1,5 +1,27 @@
-with source as (
-    select * from {{ source('fred', 'raw_fred__series_meta') }}
+with yields as (
+    select * from {{ source('fred', 'raw_fred__yields_series_meta') }}
+),
+
+cpi as (
+    select * from {{ source('fred', 'raw_fred__cpi_series_meta') }}
+),
+
+pce as (
+    select * from {{ source('fred', 'raw_fred__pce_series_meta') }}
+),
+
+nfp as (
+    select * from {{ source('fred', 'raw_fred__nfp_series_meta') }}
+),
+
+unioned as (
+    select * from yields
+    union all
+    select * from cpi
+    union all
+    select * from pce
+    union all
+    select * from nfp
 )
 
 select
@@ -18,4 +40,4 @@ select
     notes,
     cast(fetched_at_utc as timestamp)      as fetched_at_utc,
     source_name
-from source
+from unioned

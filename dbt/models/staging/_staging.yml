@@ -24,7 +24,7 @@ models:
         tests: [not_null]
 
   - name: stg_fred__series_meta
-    description: "Series-level metadata (units, frequency, seasonal adjustment) for onboarding validation before promoting a new FRED series."
+    description: "Series-level metadata (units, frequency, seasonal adjustment) for onboarding validation before promoting a new FRED series. Unions the series-meta raw table from every FRED domain (yields, CPI, PCE, NFP)."
     columns:
       - name: series_id
         description: "FRED series identifier."
@@ -34,4 +34,56 @@ models:
         tests: [not_null]
       - name: seasonal_adjustment
         description: "Seasonal adjustment basis (e.g. 'Not Seasonally Adjusted')."
+        tests: [not_null]
+
+  - name: stg_fred__cpi
+    description: "Cleaned FRED CPI index levels; one row per measure (headline/core) per date."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [cpi_date, measure_label]
+    columns:
+      - name: cpi_date
+        description: "Observation date (first of the release month)."
+        tests: [not_null]
+      - name: measure_label
+        description: "CPI measure."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["headline", "core"]
+      - name: index_level
+        description: "CPI index level (not seasonally adjusted units as published)."
+        tests: [not_null]
+
+  - name: stg_fred__pce
+    description: "Cleaned FRED PCE price index levels; one row per measure (headline/core) per date."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [pce_date, measure_label]
+    columns:
+      - name: pce_date
+        description: "Observation date (first of the release month)."
+        tests: [not_null]
+      - name: measure_label
+        description: "PCE measure."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["headline", "core"]
+      - name: index_level
+        description: "PCE price index level as published."
+        tests: [not_null]
+
+  - name: stg_fred__nfp
+    description: "Cleaned FRED nonfarm payrolls level (PAYEMS); one row per date."
+    columns:
+      - name: nfp_date
+        description: "Observation date (first of the release month)."
+        tests: [not_null, unique]
+      - name: payrolls_level
+        description: "Total nonfarm payroll employment level, in thousands."
         tests: [not_null]

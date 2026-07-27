@@ -29,3 +29,34 @@ models:
       - name: inversion_flag
         description: "True when the 10Y yield is below the 2Y yield (yield curve inversion)."
         tests: [not_null]
+
+  - name: fct_cpi
+    description: "Fact table: CPI index level plus MoM/YoY rates of change. Grain: one CPI reading, for one measure (headline or core), on one observation month. mom_pct/yoy_pct are null for the earliest 1/12 months of history, where there is no prior period to compare against."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [cpi_date, measure_label]
+    columns:
+      - name: index_level
+        description: "CPI index level as published (not the MoM/YoY rate)."
+        tests: [not_null]
+
+  - name: fct_core_pce
+    description: "Fact table: Core PCE price index level plus MoM/YoY rates of change (the Fed's preferred inflation gauge). Grain: one Core PCE reading, on one observation month. mom_pct/yoy_pct are null for the earliest 1/12 months of history. Headline PCE is ingested and staged (stg_fred__pce) but does not yet have its own mart, matching the current dashboard scope."
+    columns:
+      - name: pce_date
+        description: "Observation month."
+        tests: [not_null, unique]
+      - name: index_level
+        description: "Core PCE price index level as published (not the MoM/YoY rate)."
+        tests: [not_null]
+
+  - name: fct_nfp
+    description: "Fact table: nonfarm payrolls level plus month-over-month change. Grain: one nonfarm payrolls reading, on one observation month. change_thousands is null for the earliest month of history, where there is no prior month to compare against. Do not treat payrolls_level itself as the monthly payroll gain — that is change_thousands."
+    columns:
+      - name: nfp_date
+        description: "Observation month."
+        tests: [not_null, unique]
+      - name: payrolls_level
+        description: "Total nonfarm payroll employment level, in thousands (a level, not a change)."
+        tests: [not_null]

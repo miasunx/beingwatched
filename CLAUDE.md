@@ -121,7 +121,11 @@ complexity — it isolates the *pattern* from source-specific edge cases.
   ├── docs/
   │   └── API_INGESTION_SPEC.md   # authoritative ingestion contract, see below
   ├── ingestion/
-  │   └── load_fred_yields.py     # DGS2 + DGS10 observations, plus series metadata
+  │   ├── fred_client.py          # shared fetch/hash helpers used by all FRED loaders
+  │   ├── load_fred_yields.py     # DGS2 + DGS10 observations, plus series metadata
+  │   ├── load_fred_cpi.py        # CPIAUCSL (headline) + CPILFESL (core)
+  │   ├── load_fred_pce.py        # PCEPI (headline) + PCEPILFE (core)
+  │   └── load_fred_nfp.py        # PAYEMS
   └── dbt/
       ├── dbt_project.yml
       ├── profiles.yml
@@ -130,7 +134,10 @@ complexity — it isolates the *pattern* from source-specific edge cases.
           ├── staging/
           │   ├── _sources.yml
           │   ├── stg_fred__yields.sql
-          │   ├── stg_fred__series_meta.sql
+          │   ├── stg_fred__cpi.sql
+          │   ├── stg_fred__pce.sql
+          │   ├── stg_fred__nfp.sql
+          │   ├── stg_fred__series_meta.sql   # unions series-meta across all 4 domains
           │   └── _staging.yml
           ├── intermediate/
           │   ├── int_treasury_yields_pivoted.sql
@@ -138,6 +145,9 @@ complexity — it isolates the *pattern* from source-specific edge cases.
           └── marts/
               ├── fct_treasury_yields.sql
               ├── fct_treasury_spread.sql
+              ├── fct_cpi.sql
+              ├── fct_core_pce.sql
+              ├── fct_nfp.sql
               └── _marts.yml
   ```
 - FRED Treasury yields slice is complete and spec-compliant end-to-end:
@@ -147,8 +157,24 @@ complexity — it isolates the *pattern* from source-specific edge cases.
   endpoint), staging does light cleanup only, an intermediate model
   pivots 2Y/10Y onto one row (the one case CLAUDE.md's own rules call
   out as justifying an intermediate model), and `fct_treasury_spread`
-  computes the 2s10s spread and inversion flag. `dbt build` passes with
-  27 tests (0 errors), source freshness checks pass on both raw tables.
+  computes the 2s10s spread and inversion flag.
+- Macro fact tables (`fct_cpi`, `fct_core_pce`, `fct_nfp`) are built,
+  replicating the same raw → staging → mart pattern via the shared
+  `ingestion/fred_client.py` helpers. `fct_cpi` holds both headline and
+  core CPI (long format, one row per measure per month, mirroring the
+  `maturity_label` pattern in `fct_treasury_yields`) with MoM/YoY computed
+  via `lag()` windows partitioned by measure. `fct_core_pce` is core-only
+  per the locked modeling decision below; headline PCE (`PCEPILFE`'s
+  sibling, `PCEPI`) is ingested and staged (`stg_fred__pce`) but has no
+  mart yet since the dashboard scope only calls for Core PCE — revisit if
+  that scope changes. `fct_nfp` holds the PAYEMS level plus
+  `change_thousands` (never the level itself) via `lag()`. `mom_pct`/
+  `yoy_pct`/`change_thousands` are legitimately null for the earliest
+  1–12 months of history (no prior period to compare against) — this is
+  expected, not a data quality bug.
+- `dbt build` passes with 54 tests (0 errors) across 11 models; source
+  freshness checks pass on all 8 raw tables (4 domains × observations +
+  series metadata each).
 
 ## Conventions to follow
 
@@ -170,7 +196,7 @@ complexity — it isolates the *pattern* from source-specific edge cases.
 
 1. `dim_dates` + `dim_tickers` — the shared spine other facts join to
 2. Polygon prices pipeline → `fct_prices` (indices, sector leaders, ETFs, watchlist)
-3. Macro fact tables → `fct_cpi`, `fct_core_pce`, `fct_nfp`
+3. ~~Macro fact tables → `fct_cpi`, `fct_core_pce`, `fct_nfp`~~ — done
 4. Finnhub economic calendar → `fct_economic_calendar`
 5. Polygon futures → `fct_futures`
 6. Incremental loading (replace drop-and-reload with append-only)
