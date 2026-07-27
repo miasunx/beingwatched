@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: fct_treasury_yields
-    description: "Fact table: daily Treasury yields by maturity."
+    description: "Fact table: daily Treasury yields by maturity. Grain: one yield reading, for one maturity, on one date."
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -10,4 +10,22 @@ models:
       - name: yield_pct
         description: "Yield percent."
         tests: [not_null]
-        
+      - name: yield_realtime_start
+        description: "Start of the vintage window during which this value was the officially published observation."
+        tests: [not_null]
+      - name: yield_realtime_end
+        description: "End of the vintage window during which this value was the officially published observation."
+        tests: [not_null]
+
+  - name: fct_treasury_spread
+    description: "Fact table: 10Y minus 2Y Treasury spread. Grain: one 2s10s spread reading, on one date. Built from an inner join on date — never pairs values from different dates."
+    columns:
+      - name: yield_date
+        description: "Observation date shared by both the 2Y and 10Y readings."
+        tests: [not_null, unique]
+      - name: spread_bps
+        description: "(10Y yield pct - 2Y yield pct) * 100."
+        tests: [not_null]
+      - name: inversion_flag
+        description: "True when the 10Y yield is below the 2Y yield (yield curve inversion)."
+        tests: [not_null]

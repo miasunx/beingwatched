@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: stg_fred__yields
-    description: "Cleaned FRED Treasury yields; one row per maturity per date."
+    description: "Cleaned FRED Treasury yields; one row per maturity per date, with the observation's realtime (vintage) validity window preserved."
     columns:
       - name: yield_date
         description: "Observation date."
@@ -16,4 +16,22 @@ models:
       - name: yield_pct
         description: "Yield as a percent (e.g. 4.35)."
         tests: [not_null]
-        
+      - name: yield_realtime_start
+        description: "Start of the vintage window during which this value was the officially published observation."
+        tests: [not_null]
+      - name: yield_realtime_end
+        description: "End of the vintage window during which this value was the officially published observation."
+        tests: [not_null]
+
+  - name: stg_fred__series_meta
+    description: "Series-level metadata (units, frequency, seasonal adjustment) for onboarding validation before promoting a new FRED series."
+    columns:
+      - name: series_id
+        description: "FRED series identifier."
+        tests: [not_null, unique]
+      - name: units
+        description: "Unit of the series values as published by FRED (e.g. 'Percent')."
+        tests: [not_null]
+      - name: seasonal_adjustment
+        description: "Seasonal adjustment basis (e.g. 'Not Seasonally Adjusted')."
+        tests: [not_null]

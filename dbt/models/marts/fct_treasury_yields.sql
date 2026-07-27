@@ -5,5 +5,7 @@ with yields as (
 select
     yield_date,
     maturity_label,
-    yield_pct
+    yield_pct,
+    yield_realtime_start,
+    yield_realtime_end
 from yields

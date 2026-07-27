@@ -61,6 +61,16 @@ API → raw table (untouched) → staging model (light cleanup) → mart (fact/d
   and the pipeline pattern are proven.
 - **Version control:** git. Non-negotiable for portfolio credibility.
 
+## Reference documents
+
+- `docs/API_INGESTION_SPEC.md` — authoritative source contract for API
+  ingestion across Massive/Polygon, FRED, and Finnhub: exact fields to
+  capture per endpoint, transformation formulas, refresh cadence, and
+  data-quality/reconciliation rules. This file is **not** auto-loaded the
+  way CLAUDE.md is — consult it explicitly before writing or modifying any
+  ingestion or transformation code, and keep it in sync with the pipeline
+  as it changes.
+
 ## Key modeling decisions (don't relitigate these without a good reason)
 
 - **Grain discipline drives table design.** CPI, Core PCE, and NFP each get
@@ -103,13 +113,15 @@ complexity — it isolates the *pattern* from source-specific edge cases.
 
 - Environment setup in progress (Python via Homebrew, `.venv`, dbt-core,
   dbt-duckdb, DuckDB, requests) on macOS with VS Code.
-- Project file/folder structure created:
+- Project file/folder structure:
   ```
   beingwatched/
   ├── .env                      # FRED_API_KEY (git-ignored)
   ├── .gitignore
+  ├── docs/
+  │   └── API_INGESTION_SPEC.md   # authoritative ingestion contract, see below
   ├── ingestion/
-  │   └── load_fred_yields.py
+  │   └── load_fred_yields.py     # DGS2 + DGS10 observations, plus series metadata
   └── dbt/
       ├── dbt_project.yml
       ├── profiles.yml
@@ -118,13 +130,25 @@ complexity — it isolates the *pattern* from source-specific edge cases.
           ├── staging/
           │   ├── _sources.yml
           │   ├── stg_fred__yields.sql
+          │   ├── stg_fred__series_meta.sql
           │   └── _staging.yml
+          ├── intermediate/
+          │   ├── int_treasury_yields_pivoted.sql
+          │   └── _intermediate.yml
           └── marts/
               ├── fct_treasury_yields.sql
+              ├── fct_treasury_spread.sql
               └── _marts.yml
   ```
-- Not yet run: ingestion script against the live FRED API, `dbt debug`,
-  `dbt deps`, `dbt build`.
+- FRED Treasury yields slice is complete and spec-compliant end-to-end:
+  raw layer captures the full contract from `docs/API_INGESTION_SPEC.md`
+  §4.4 (per-observation vintage window, request/response metadata,
+  payload hash, full raw payload, plus series metadata from a second
+  endpoint), staging does light cleanup only, an intermediate model
+  pivots 2Y/10Y onto one row (the one case CLAUDE.md's own rules call
+  out as justifying an intermediate model), and `fct_treasury_spread`
+  computes the 2s10s spread and inversion flag. `dbt build` passes with
+  27 tests (0 errors), source freshness checks pass on both raw tables.
 
 ## Conventions to follow
 

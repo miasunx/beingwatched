@@ -4,8 +4,12 @@ sources:
     schema: raw
     tables:
       - name: raw_fred__yields
-        loaded_at_field: _loaded_at::timestamp
+        loaded_at_field: fetched_at_utc::timestamp
         freshness:
           warn_after: {count: 36, period: hour}
           error_after: {count: 72, period: hour}
-          
+      - name: raw_fred__series_meta
+        loaded_at_field: fetched_at_utc::timestamp
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}

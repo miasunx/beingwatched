@@ -1,0 +1,11 @@
+version: 2
+models:
+  - name: int_treasury_yields_pivoted
+    description: "One row per date with 2Y and 10Y yields pivoted onto the same row. Grain: one date, where both maturities have an observation on that date (inner join — never pairs values from different dates)."
+    columns:
+      - name: yield_date
+        tests: [not_null, unique]
+      - name: yield_2y_pct
+        tests: [not_null]
+      - name: yield_10y_pct
+        tests: [not_null]
