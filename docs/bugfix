@@ -1,0 +1,28 @@
+Date found: 2026-07-28
+Status: Fixed
+Severity: High
+Area: CPI, Core PCE, and NFP marts
+Files: fct_cpi, fct_core_pce, fct_nfp
+
+### 1. How to detect
+
+Compare the expected monthly date sequence with the actual staging data. October 2025 was missing for both headline and core CPI.
+
+Then verify whether MoM and YoY calculations use exact calendar dates or row positions. `lag(12)` revealed the issue because a missing row shifted the comparison by one month.
+
+### 2. How to fix
+
+Replace row-based `lag()` calculations with calendar-based self-joins:
+
+* MoM: join to the exact prior month
+* YoY: join to the exact month one year earlier
+
+When the required month is missing, return `NULL` instead of calculating from the wrong period.
+
+Apply the same pattern to related monthly models as a defensive fix. Update the formula version when the calculation method changes.
+
+### 3. What I learned
+
+`lag(1)` and `lag(12)` count rows, not calendar periods.
+
+For monthly time-series data, missing dates can silently produce incorrect metrics. Calendar-based joins are safer because they make the intended comparison explicit and fail safely when data is unavailable.
