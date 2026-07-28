@@ -40,6 +40,9 @@ models:
       - name: index_level
         description: "CPI index level as published (not the MoM/YoY rate)."
         tests: [not_null]
+      - name: formula_version
+        description: "Version tag for the mom_pct/yoy_pct formula. Bump when the calculation changes so historical rows stay attributable to the formula that produced them."
+        tests: [not_null]
 
   - name: fct_core_pce
     description: "Fact table: Core PCE price index level plus MoM/YoY rates of change (the Fed's preferred inflation gauge). Grain: one Core PCE reading, on one observation month. mom_pct/yoy_pct are null for the earliest 1/12 months of history. Headline PCE is ingested and staged (stg_fred__pce) but does not yet have its own mart, matching the current dashboard scope."
@@ -49,6 +52,9 @@ models:
         tests: [not_null, unique]
       - name: index_level
         description: "Core PCE price index level as published (not the MoM/YoY rate)."
+        tests: [not_null]
+      - name: formula_version
+        description: "Version tag for the mom_pct/yoy_pct formula. Bump when the calculation changes so historical rows stay attributable to the formula that produced them."
         tests: [not_null]
 
   - name: fct_nfp

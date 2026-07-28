@@ -28,9 +28,20 @@ def fetch_observations(api_key: str, series_id: str, limit: int = 400) -> dict:
     resp = requests.get(OBSERVATIONS_ENDPOINT, params=params, timeout=30)
     raw_text = resp.text
     resp.raise_for_status()
+    body = resp.json()
+
+    expected_rows = min(int(body["count"]), int(body["limit"]))
+    actual_rows = len(body["observations"])
+    if actual_rows != expected_rows:
+        raise RuntimeError(
+            f"{series_id}: expected {expected_rows} observations "
+            f"(count={body['count']}, limit={body['limit']}) but got {actual_rows} "
+            f"— possible truncated or incomplete response"
+        )
+
     return {
         "params": params,
-        "body": resp.json(),
+        "body": body,
         "raw_text": raw_text,
         "status": resp.status_code,
         "request_id": str(uuid.uuid4()),

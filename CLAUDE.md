@@ -91,6 +91,15 @@ API → raw table (untouched) → staging model (light cleanup) → mart (fact/d
 - **Intermediate models are added only when needed** — e.g. when pivoting 2Y
   and 10Y yields onto one row to compute the 2s10s spread. Don't add layers
   preemptively.
+- **PCE: `fct_core_pce` only, PCEPI (headline) stays staged, not marted.**
+  `PCEPI` (headline) is ingested and cleaned up in `stg_fred__pce` alongside
+  `PCEPILFE` (core) — schema-complete raw/staging per the ingestion spec —
+  but only `fct_core_pce` is built, since the dashboard scope only calls for
+  Core PCE. Don't add a `fct_headline_pce` speculatively. If a
+  headline-vs-core comparison becomes an actual requirement later, refactor
+  into one unified `fct_pce_inflation` (long format, `measure_label` column,
+  mirroring the `fct_cpi`/`fct_treasury_yields` pattern) rather than bolting
+  on a separate headline-only fact table.
 - **Data quality:** dbt generic tests (`not_null`, `unique`, `accepted_values`,
   `relationships`) plus `dbt-expectations` and `dbt_utils` (e.g. composite
   uniqueness tests on grain columns). Use `dbt build`, not `dbt run` + `dbt test`
@@ -172,9 +181,16 @@ complexity — it isolates the *pattern* from source-specific edge cases.
   `yoy_pct`/`change_thousands` are legitimately null for the earliest
   1–12 months of history (no prior period to compare against) — this is
   expected, not a data quality bug.
-- `dbt build` passes with 54 tests (0 errors) across 11 models; source
+- `dbt build` passes with 57 tests (0 errors) across 11 models; source
   freshness checks pass on all 8 raw tables (4 domains × observations +
-  series metadata each).
+  series metadata each). Includes a singular test
+  (`tests/assert_fred_series_metadata_matches_expected.sql`) asserting
+  each series' units/seasonal-adjustment/frequency against known-good
+  values — verified to actually fail on drift, not just present. `fct_cpi`
+  and `fct_core_pce` carry a `formula_version` column so historical MoM/YoY
+  rows stay attributable to the formula that produced them if it changes.
+  `fred_client.fetch_observations` raises if the observation count doesn't
+  match FRED's reported `count`/`limit` (catches truncated responses).
 
 ## Conventions to follow
 
